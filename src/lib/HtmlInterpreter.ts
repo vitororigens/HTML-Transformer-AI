@@ -265,9 +265,12 @@ export class HtmlInterpreter {
          - Exemplo: converter "<a href="/documents/37101/0/529%C2%AA+RE.pdf/...">529ª Reunião Extraordinária</a>" para "/documents/d/${department}/529-_re"
        - Normalizar caracteres especiais em URLs (converter acentos para versões sem acento)
        - Substituir espaços (_)
+       - IMPORTANTE! Substituir + por underscores (_)
+       - IMPORTANTE! Substituir n%C2%BA por  (-)
+       - IMPORTANTE! Substituir espaços por underscores (_)
        - Substituir símbolos por underscores (_)
        - Se houver uma sequência de múltiplos hífens consecutivos (---- ou ---), substituí-los por um único hífen (-)
-       - Se houver uma sequência de múltiplos + consecutivos (+++ ou ++++), substituí-los por um único hífen (-)
+       - Se houver uma sequência de múltiplos (+++ ou ++++), substituí-los por um único hífen (-)
     
     2. Adicionar atributos de acessibilidade APENAS para links:
        - Adicionar um atributo aria-label descritivo baseado no conteúdo do link
