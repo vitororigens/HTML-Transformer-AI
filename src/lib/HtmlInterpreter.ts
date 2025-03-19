@@ -80,18 +80,17 @@ export class HtmlInterpreter {
       normalized = normalized.replace(new RegExp(from, 'g'), to);
     }
 
-    if (normalized.endsWith("-")) {
-      normalized = normalized.slice(0, -1);
-    }
+    normalized = normalized.replace(/\-{2,}/g, "-");
 
     return this.debug("normalizeSpecialChars", normalized);
   }
+
 
   private adjustFileName(fileName: string): string {
     return this.debug("adjustFileName", fileName.replace(/2$/, "282-29"));
   }
 
-  private normalizeUrl(originalUrl: string, options: { 
+  private normalizeUrl(originalUrl: string, options: {
     normalizeSpecialChars: boolean,
     relativizeLinks: boolean,
     secretaria: string
@@ -113,18 +112,18 @@ export class HtmlInterpreter {
     if (originalUrl.includes("/documents/")) {
       const cleanUrl = this.removeUrlParams(originalUrl);
       const fileName = this.extractFileName(cleanUrl);
-      
+
       if (fileName) {
         const extension = this.getExtension(fileName);
         const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf("."));
-        
-        let normalizedName = options.normalizeSpecialChars ? 
-          this.normalizeSpecialChars(nameWithoutExt) : 
+
+        let normalizedName = options.normalizeSpecialChars ?
+          this.normalizeSpecialChars(nameWithoutExt) :
           nameWithoutExt.replace(/[+\s]/g, "-").toLowerCase();
-        
+
         normalizedName = normalizedName.replace(/\./g, "-");
         normalizedName = this.adjustFileName(normalizedName);
-        
+
         return this.debug("normalizeUrl-final", `/documents/d/${options.secretaria}/${normalizedName}${extension}`);
       }
     }
@@ -133,18 +132,18 @@ export class HtmlInterpreter {
     if (originalUrl.includes("/wp-content/") || originalUrl.includes("/wp-conteudo")) {
       const cleanUrl = this.removeUrlParams(originalUrl);
       const fileName = this.extractFileName(cleanUrl);
-      
+
       if (fileName) {
         const extension = this.getExtension(fileName);
         const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf("."));
-        
-        let normalizedName = options.normalizeSpecialChars ? 
-          this.normalizeSpecialChars(nameWithoutExt) : 
+
+        let normalizedName = options.normalizeSpecialChars ?
+          this.normalizeSpecialChars(nameWithoutExt) :
           nameWithoutExt;
-        
+
         normalizedName = normalizedName.replace(/\./g, "-");
         normalizedName = this.adjustFileName(normalizedName);
-        
+
         return this.debug("normalizeUrl-wp", `/documents/d/${options.secretaria}/${normalizedName}${extension}`);
       }
     }
@@ -177,21 +176,21 @@ export class HtmlInterpreter {
 
     let processedHtml = html;
     const root = parse(html);
-    
+
     // Process all links and images
     const elements = root.querySelectorAll('[href], [src]');
     for (const element of elements) {
       const isHref = element.hasAttribute('href');
       const isSrc = element.hasAttribute('src');
       const originalUrl = isHref ? element.getAttribute('href') : element.getAttribute('src');
-      
+
       if (originalUrl) {
         const newUrl = this.normalizeUrl(originalUrl, options);
-        
+
         if (originalUrl !== newUrl) {
           this.urlsNormalized++;
           this.urlsProcessed.push({ original: originalUrl, new: newUrl });
-          
+
           if (isHref) {
             element.setAttribute('href', newUrl);
           }
@@ -228,6 +227,8 @@ export class HtmlInterpreter {
        - Normalizar caracteres especiais em URLs (converter acentos para versões sem acento)
        - Substituir espaços (_)
        - Substituir símbolos por underscores (_)
+       - Se houver uma sequência de múltiplos hífens consecutivos (---- ou ---), substituí-los por um único hífen (-)
+       - Se houver uma sequência de múltiplos + consecutivos (+++ ou ++++), substituí-los por um único hífen (-)
     
     2. Adicionar atributos de acessibilidade APENAS para links:
        - Adicionar um atributo aria-label descritivo baseado no conteúdo do link
@@ -244,18 +245,15 @@ export class HtmlInterpreter {
 
   public addDepartmentRules(rules: DepartmentRules) {
     this.rules.set(rules.name, rules);
-    
+
   }
 
   public async interpret(html: string, department: string): Promise<string> {
-    // Verifica se já existem regras para o departamento
     let rules = this.rules.get(department);
-    
-    // Se não existirem regras para o departamento, cria-as dinamicamente
+
     if (!rules) {
-      // Primeira letra maiúscula para o nome do departamento na apresentação
       const departmentName = department.charAt(0).toUpperCase() + department.slice(1);
-      
+
       rules = {
         name: department,
         prompt: `Você é um especialista em transformação de URLs e acessibilidade para a Secretaria de ${departmentName}.
@@ -269,6 +267,8 @@ export class HtmlInterpreter {
        - Normalizar caracteres especiais em URLs (converter acentos para versões sem acento)
        - Substituir espaços (_)
        - Substituir símbolos por underscores (_)
+       - Se houver uma sequência de múltiplos hífens consecutivos (---- ou ---), substituí-los por um único hífen (-)
+       - Se houver uma sequência de múltiplos + consecutivos (+++ ou ++++), substituí-los por um único hífen (-)
     
     2. Adicionar atributos de acessibilidade APENAS para links:
        - Adicionar um atributo aria-label descritivo baseado no conteúdo do link
@@ -281,7 +281,7 @@ export class HtmlInterpreter {
     
     Forneça o HTML resultante mantendo exatamente a mesma estrutura, apenas com as URLs normalizadas e aria-labels adicionados aos links.`
       };
-      
+
       // Adiciona as regras à coleção
       this.addDepartmentRules(rules);
     }
@@ -307,7 +307,7 @@ export class HtmlInterpreter {
       });
 
       const transformedHtml = completion.choices[0]?.message?.content;
-      
+
       if (!transformedHtml) {
         throw new Error('Failed to transform HTML');
       }
