@@ -1,4 +1,4 @@
-import { type HTMLElement, parse } from 'node-html-parser';
+import { parse } from 'node-html-parser';
 import { Groq } from "groq-sdk";
 
 export interface DepartmentRules {
@@ -174,7 +174,6 @@ export class HtmlInterpreter {
       };
     }
 
-    let processedHtml = html;
     const root = parse(html);
 
     // Process all links and images
