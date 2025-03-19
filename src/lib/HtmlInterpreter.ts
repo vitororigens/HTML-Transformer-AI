@@ -244,12 +244,46 @@ export class HtmlInterpreter {
 
   public addDepartmentRules(rules: DepartmentRules) {
     this.rules.set(rules.name, rules);
+    
   }
 
   public async interpret(html: string, department: string): Promise<string> {
-    const rules = this.rules.get(department);
+    // Verifica se já existem regras para o departamento
+    let rules = this.rules.get(department);
+    
+    // Se não existirem regras para o departamento, cria-as dinamicamente
     if (!rules) {
-      throw new Error(`No rules found for department: ${department}`);
+      // Primeira letra maiúscula para o nome do departamento na apresentação
+      const departmentName = department.charAt(0).toUpperCase() + department.slice(1);
+      
+      rules = {
+        name: department,
+        prompt: `Você é um especialista em transformação de URLs e acessibilidade para a Secretaria de ${departmentName}.
+    
+    Sua ÚNICA tarefa é modificar o HTML fornecido da seguinte forma:
+    
+    1. Normalizar URLs:
+       - Para links que contêm "/documents/" com arquivos PDF:
+         - Converter para o formato: /documents/d/${department}/[nome-do-arquivo] (sem a extensão -pdf)
+         - Exemplo: converter "<a href="/documents/37101/0/529%C2%AA+RE.pdf/...">529ª Reunião Extraordinária</a>" para "/documents/d/${department}/529-_re"
+       - Normalizar caracteres especiais em URLs (converter acentos para versões sem acento)
+       - Substituir espaços (_)
+       - Substituir símbolos por underscores (_)
+    
+    2. Adicionar atributos de acessibilidade APENAS para links:
+       - Adicionar um atributo aria-label descritivo baseado no conteúdo do link
+       - Exemplo: <a href="..." aria-label="Cronograma de reuniões do Conselho de ${departmentName} do Distrito Federal (CSDF) para o ano 2025.">
+    
+    NÃO modifique outros elementos HTML.
+    NÃO altere a estrutura do documento.
+    NÃO adicione novos elementos.
+    NÃO modifique o conteúdo textual.
+    
+    Forneça o HTML resultante mantendo exatamente a mesma estrutura, apenas com as URLs normalizadas e aria-labels adicionados aos links.`
+      };
+      
+      // Adiciona as regras à coleção
+      this.addDepartmentRules(rules);
     }
 
     try {
